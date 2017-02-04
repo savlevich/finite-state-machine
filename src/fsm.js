@@ -6,12 +6,12 @@ class FSM {
     constructor(config) {
         if (config) {
             this.config = config;
-            this.state = config.initial;
+            this.state = this.config.initial;
             this.prevStates = [];
-            this.prevStates.unshift(config.initial);
+            this.prevStates.push(this.state);
             this.transitions = 0;
         } else {
-            throw Error('Error');
+            throw Error('Config isn\'t passed');
         }
     } 
     /**
@@ -27,11 +27,12 @@ class FSM {
      */
     changeState(state) {
         if (!this.config.states[state]) {
-            throw new Error('Error');
+            throw new Error('State isn\'t exist');
+        } else {
+            this.state = state;    
+            this.transitions++;
+            this.prevStates[this.transitions] = this.state;
         }
-        this.state = state;    
-        this.prevStates.unshift(this.state);
-        this.transitions = 0;
     }
 
     /**
@@ -40,12 +41,14 @@ class FSM {
      */
     trigger(event) {
         var currentEvent = this.config.states[this.state].transitions[event];
+        
         if (!currentEvent) {
-            throw new Error ('error');
+            throw new Error ('Event in current state isn\'t exist');
+        } else {
+            this.state = currentEvent;
+            this.transitions++;
+            this.prevStates[this.transitions] = this.state;
         }
-        this.state = currentEvent;
-        this.prevStates.unshift(this.state);
-        this.transitions = 0;
     }
 
     /**
@@ -62,23 +65,22 @@ class FSM {
      * @returns {Array}
      */
     getStates(event) {
-        debugger;
-        var arr = [];
-        var obj = this.config['states'];
+        var arrStates = [];
+        var states = this.config['states'];
 
-        if (!event) {
-            for (var key in obj) {
-                arr.push(key);
+        if (!event) { //returns all states if argument is empty 
+            for (var key in states) {
+                arrStates.push(key);
             }
         } else {
-            for (var key in obj) {
-                if (obj[key].transitions[event]) {
-                    arr.push(key);
+            for (var key in states) {
+                if (states[key].transitions[event]) {
+                    arrStates.push(key);
                 }
             }
         }
 
-        return arr;
+        return arrStates;
     }
 
     /**
@@ -87,12 +89,12 @@ class FSM {
      * @returns {Boolean}
      */
     undo() {
-        if (this.prevStates.length <= 1 || this.transitions >= this.prevStates.length - 1) {
-            return false;
+        if (this.transitions) {
+            this.transitions--;
+            this.state = this.prevStates[this.transitions];
+            return true;
         } else {
-        this.transitions++;
-        this.state = this.prevStates[this.transitions];
-        return true;
+            return false;
         }
     }
 
@@ -102,12 +104,12 @@ class FSM {
      * @returns {Boolean}
      */
     redo() {
-        if (this.prevStates.length <= 1 ||  this.transitions == 0 ) {
+        if (this.transitions == this.prevStates.length - 1) {
             return false;
         } else {
-        this.transitions--;
-        this.state = this.prevStates[this.transitions];
-        return true;
+            this.transitions++;
+            this.state = this.prevStates[this.transitions];
+            return true;
         }
     }
 
@@ -115,7 +117,9 @@ class FSM {
      * Clears transition history
      */
     clearHistory() {
+        this.state = this.config.initial;
         this.prevStates = [];
+        this.prevStates.push(this.state);
         this.transitions = 0;
     }
 }
@@ -124,30 +128,4 @@ module.exports = FSM;
 
 /** @Created by Uladzimir Halushka **/
 
-// const config = {
-//     initial: 'normal',
-//     states: {
-//         normal: {
-//             transitions: {
-//                 study: 'busy',
-//             }
-//         },
-//         busy: {
-//             transitions: {
-//                 get_tired: 'sleeping',
-//                 get_hungry: 'hungry',
-//             }
-//         },
-//         hungry: {
-//             transitions: {
-//                 eat: 'normal'
-//             },
-//         },
-//         sleeping: {
-//             transitions: {
-//                 get_hungry: 'hungry',
-//                 get_up: 'normal',
-//             },
-//         },
-//     }
-// };
+
