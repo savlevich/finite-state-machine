@@ -68,7 +68,7 @@ class FSM {
         var arrStates = [];
         var states = this.config['states'];
 
-        if (!event) { //returns all states if argument is empty 
+        if (!event) { 
             for (var key in states) {
                 arrStates.push(key);
             }
